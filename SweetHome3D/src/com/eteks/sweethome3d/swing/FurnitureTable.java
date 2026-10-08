@@ -731,6 +731,46 @@ public class FurnitureTable extends JTable implements View, Printable {
     // with printable renderers for each column
     DefaultTableColumnModel printableColumnModel = new DefaultTableColumnModel();
     TableColumnModel columnModel = getColumnModel();
+
+    List<TableColumn> columnsToPrint = new ArrayList<>();
+    TableColumn levelCol = null;
+
+    HomePieceOfFurniture.SortableProperty levelProp = HomePieceOfFurniture.SortableProperty.LEVEL;
+
+    for (int i = 0; i < columnModel.getColumnCount(); i++) {
+      TableColumn col = columnModel.getColumn(i);
+
+      if (col.getIdentifier() == levelProp) {
+        levelCol = col;
+
+        continue;
+      }
+
+      columnsToPrint.add(col);
+    }
+
+    if (levelCol == null) {
+      levelCol = new TableColumn();
+      levelCol.setIdentifier(levelProp);
+      levelCol.setHeaderValue(preferences.getLocalizedString(FurnitureTable.class, "levelColumn"));
+      levelCol.setCellRenderer(new DefaultTableCellRenderer() { 
+        @Override
+        public Component getTableCellRendererComponent(JTable table, 
+             Object value, boolean isSelected, boolean hasFocus, 
+             int row, int column) {
+          HomePieceOfFurniture piece = (HomePieceOfFurniture)value; 
+          Level level = value != null 
+              ? piece.getLevel()
+              : null;
+          return super.getTableCellRendererComponent(
+              table, level != null  ? level.getName()  : null, isSelected, hasFocus, row, column); 
+        }
+      });
+      levelCol.setPreferredWidth(70);
+    }
+
+    columnsToPrint.add(levelCol);
+
     final DefaultTableCellRenderer defaultRenderer = new DefaultTableCellRenderer();
     defaultRenderer.setHorizontalAlignment(DefaultTableCellRenderer.CENTER);
     TableCellRenderer printableHeaderRenderer = new TableCellRenderer() {
@@ -750,8 +790,7 @@ public class FurnitureTable extends JTable implements View, Printable {
           return headerRendererLabel;
         }
       };
-    for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
-      final TableColumn tableColumn = columnModel.getColumn(columnIndex);
+    for (final TableColumn tableColumn : columnsToPrint) {
       // Create a printable column from existing table column
       TableColumn printableColumn = new TableColumn();
       printableColumn.setIdentifier(tableColumn.getIdentifier());
